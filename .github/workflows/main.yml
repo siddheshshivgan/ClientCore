@@ -7,7 +7,7 @@ on:
 
 jobs:
   combine-and-push:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     env:
         SID_EMAIL_ID: ${{ secrets.SID_EMAIL_ID }}
@@ -28,6 +28,15 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install setuptools wheel
+        
+    - name: Install Tesseract OCR
+      run: |
+        choco install tesseract
 
     - name: Install dependencies
       run: |
