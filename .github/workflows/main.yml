@@ -43,6 +43,11 @@ jobs:
         git clone https://x-access-token:${{ secrets.FRONTEND_PAT }}@github.com/siddheshshivgan/AutoAuthorizePIT.git
         cp output/combined.xlsx AutoAuthorizePIT/
         cd frontend-repo
-        git add combined.xlsx
-        git commit -m "Update combined Excel on $(date)"
-        git push
+        git pull
+        if ! git diff --quiet; then
+          git add combined.xlsx
+          git commit -m "Update combined Excel on $(date)"
+          git push
+        else
+          echo "No changes to commit"
+        fi
