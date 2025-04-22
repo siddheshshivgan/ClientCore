@@ -1,0 +1,48 @@
+name: Combine Excel and Push to Frontend
+
+on:
+  schedule:
+    - cron: '30 3 * * *' # 9 AM IST = 3:30 AM UTC
+  workflow_dispatch:
+
+jobs:
+  combine-and-push:
+    runs-on: ubuntu-latest
+
+    env:
+        SID_EMAIL_ID: ${{ secrets.SID_EMAIL_ID }}
+        RAJAN_EMAIL_ID: ${{ secrets.RAJAN_EMAIL_ID }}
+        PARTNER_DESK: ${{ secrets.PARTNER_DESK }}
+        SID_ID: ${{ secrets.SID_ID }}
+        SID_PASSWORD: ${{ secrets.SID_PASSWORD }}
+        RAJAN_ID: ${{ secrets.RAJAN_ID }}
+        RAJAN_PASSWORD: ${{ secrets.RAJAN_PASSWORD }}
+        RESHMA_ID: ${{ secrets.RESHMA_ID }}
+        RESHMA_PASSWORD: ${{ secrets.RESHMA_PASSWORD }}
+
+    steps:
+    - name: Checkout backend repo
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: Run scraper and combine files
+      run: python main.py
+
+    - name: Push combined.xlsx to frontend repo
+      run: |
+        git config --global user.name "github-actions"
+        git config --global user.email "actions@github.com"
+        git clone https://x-access-token:${{ secrets.FRONTEND_PAT }}@github.com/siddheshshivgan/AutoAuthorizePIT.git
+        cp output/combined.xlsx AutoAuthorizePIT/
+        cd frontend-repo
+        git add combined.xlsx
+        git commit -m "Update combined Excel on $(date)"
+        git push
