@@ -1,0 +1,9 @@
+pandas
+openpyxl
+xlrd
+glob2
+webdriver-manager
+selenium
+pytesseract
+Pillow
+requests
