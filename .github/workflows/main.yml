@@ -51,7 +51,7 @@ jobs:
         git config --global user.email "actions@github.com"
         git clone https://x-access-token:${{ secrets.FRONTEND_PAT }}@github.com/siddheshshivgan/AutoAuthorizePIT.git
         cp output/combined.xlsx AutoAuthorizePIT/
-        cd frontend-repo
+        cd AutoAuthorizePIT
         git pull
         if (-not (git diff --quiet)) {
           git add combined.xlsx
