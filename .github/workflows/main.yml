@@ -53,10 +53,10 @@ jobs:
         cp output/combined.xlsx AutoAuthorizePIT/
         cd frontend-repo
         git pull
-        if ! git diff --quiet; then
+        if (-not (git diff --quiet)) {
           git add combined.xlsx
-          git commit -m "Update combined Excel on $(date)"
+          git commit -m "Update combined Excel on $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")"
           git push
-        else
-          echo "No changes to commit"
-        fi
+        } else {
+          Write-Host "No changes to commit"
+        }
