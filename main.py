@@ -5,6 +5,7 @@ import pandas as pd
 from pathlib import Path
 from PIL import Image
 import pytesseract
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -13,26 +14,44 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
+import gspread
+from gspread_dataframe import set_with_dataframe
+from google.oauth2.service_account import Credentials
+
 # Set up Tesseract
 pytesseract.pytesseract.tesseract_cmd = r'C:/Program Files/Tesseract-OCR/tesseract.exe'
 
 # Get Downloads directory
 downloads_dir = Path.home() / "Downloads"
 
+# Chrome options for headless mode
 chrome_options = Options()
 chrome_options.add_argument("--headless")
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-dev-shm-usage")
+
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
 
+# Accounts
 accounts = [
     {"name": "SID", "id": os.environ.get('SID_ID'), "password": os.environ.get('SID_PASSWORD')},
     {"name": "RAJAN", "id": os.environ.get('RAJAN_ID'), "password": os.environ.get('RAJAN_PASSWORD')},
     {"name": "RESHMA", "id": os.environ.get('RESHMA_ID'), "password": os.environ.get('RESHMA_PASSWORD')},
 ]
 
+# Connect to Google Sheets
+def connect_to_gsheet():
+    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+    creds = Credentials.from_service_account_file("credentials.json", scopes=scopes)
+    client = gspread.authorize(creds)
+    return client
+
+# Get latest XLS files
 def get_latest_xls_files(num_files=3):
     xls_files = sorted(glob.glob(str(downloads_dir / '*.xls')), key=os.path.getmtime, reverse=True)
     return xls_files[:num_files]
 
+# Login Function
 def login(user_id, pwd):
     driver.find_element(By.NAME, 'partnerId1').send_keys(user_id)
     driver.find_element(By.NAME, 'password1').send_keys(pwd)
@@ -42,6 +61,7 @@ def login(user_id, pwd):
     driver.find_element(By.NAME, 'capcode').send_keys(captcha_text)
     driver.find_element(By.NAME, 'action').click()
 
+# Authorize and download all files
 def authorize_all():
     driver.get(os.environ.get('PARTNER_DESK'))
     for acc in accounts:
@@ -50,6 +70,10 @@ def authorize_all():
         if 'E-MF Account' not in driver.page_source:
             login(acc['id'], acc['password'])
             time.sleep(10)
+        if 'popupCloseButton' in driver.page_source:
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'popupCloseButton'))).click()
+        if 'hover_bkgr_aum' in driver.page_source:
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'popupClose'))).click()
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//a[@onclick='javascript:getAccountDetail();']"))).click()
         WebDriverWait(driver, 10).until(EC.number_of_windows_to_be(2))
         for window_handle in driver.window_handles:
@@ -63,8 +87,7 @@ def authorize_all():
         driver.get(os.environ.get('PARTNER_DESK'))
     driver.quit()
 
-
-# Combine data from latest files
+# Combine downloaded files and upload to GSheet
 def combine_xls_files_to_minimal_output():
     files = get_latest_xls_files(3)
     combined_data = pd.DataFrame()
@@ -76,16 +99,15 @@ def combine_xls_files_to_minimal_output():
         df = df[["Investor", "Date of Birth"]]
         combined_data = pd.concat([combined_data, df], ignore_index=True)
 
-    # Remove duplicates, reset index
     combined_data.drop_duplicates(inplace=True)
     combined_data.reset_index(drop=True, inplace=True)
 
-    # Save final output
-    output_dir = Path("output")
-    output_dir.mkdir(exist_ok=True)
-    combined_file = output_dir / "combined.xlsx"
-    combined_data.to_excel(combined_file, index=False)
-    return combined_file
+    # Upload to Google Sheets
+    client = connect_to_gsheet()
+    sheet = client.open("combined.xlsx").worksheet("combined")
+    sheet.clear()
+    set_with_dataframe(sheet, combined_data)
+    print("✅ Data successfully updated in Google Sheets.")
 
 if __name__ == "__main__":
     authorize_all()

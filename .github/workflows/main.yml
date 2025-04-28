@@ -19,8 +19,13 @@ jobs:
         RAJAN_PASSWORD: ${{ secrets.RAJAN_PASSWORD }}
         RESHMA_ID: ${{ secrets.RESHMA_ID }}
         RESHMA_PASSWORD: ${{ secrets.RESHMA_PASSWORD }}
+        GSHEET_CREDENTIALS_JSON: ${{ secrets.GSHEET_CREDENTIALS_JSON }}
 
     steps:
+    - name: Create service_account.json file
+      run: |
+        echo '${{ secrets.GSHEET_CREDENTIALS_JSON }}' > service_account.json
+
     - name: Checkout backend repo
       uses: actions/checkout@v2
 
@@ -44,19 +49,3 @@ jobs:
 
     - name: Run scraper and combine files
       run: python main.py
-
-    - name: Push combined.xlsx to frontend repo
-      run: |
-        git config --global user.name "github-actions"
-        git config --global user.email "actions@github.com"
-        git clone https://x-access-token:${{ secrets.FRONTEND_PAT }}@github.com/siddheshshivgan/AutoAuthorizePIT.git
-        cp output/combined.xlsx AutoAuthorizePIT/
-        cd AutoAuthorizePIT
-        git pull
-        if (-not (git diff --quiet)) {
-          git add combined.xlsx
-          git commit -m "Update combined Excel on $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")"
-          git push
-        } else {
-          Write-Host "No changes to commit"
-        }
