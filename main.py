@@ -30,7 +30,7 @@ chrome_options.add_argument("--headless")
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
 
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+driver = webdriver.Chrome(options=chrome_options)
 
 # Accounts
 accounts = [
@@ -72,7 +72,7 @@ def authorize_all():
             time.sleep(10)
         if 'popupCloseButton' in driver.page_source:
             WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'popupCloseButton'))).click()
-        if 'hover_bkgr_aum' in driver.page_source:
+        if 'popupClose' in driver.page_source:
             WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'popupClose'))).click()
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//a[@onclick='javascript:getAccountDetail();']"))).click()
         WebDriverWait(driver, 10).until(EC.number_of_windows_to_be(2))
