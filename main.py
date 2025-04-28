@@ -72,8 +72,8 @@ def authorize_all():
             time.sleep(10)
         if 'popupCloseButton' in driver.page_source:
             WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'popupCloseButton'))).click()
-        if 'popupClose' in driver.page_source:
-            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'popupClose'))).click()
+        # if 'popupClose' in driver.page_source:
+        #     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'popupClose'))).click()
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//a[@onclick='javascript:getAccountDetail();']"))).click()
         WebDriverWait(driver, 10).until(EC.number_of_windows_to_be(2))
         for window_handle in driver.window_handles:
