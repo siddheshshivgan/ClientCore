@@ -14,7 +14,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
-import gspread
+import gspread,json
 from gspread_dataframe import set_with_dataframe
 from google.oauth2.service_account import Credentials
 
@@ -41,8 +41,12 @@ accounts = [
 
 # Connect to Google Sheets
 def connect_to_gsheet():
-    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
-    creds = Credentials.from_service_account_file("credentials.json", scopes=scopes)
+    scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+
+    # Load credentials from environment variable
+    service_account_info = json.loads(os.environ["GSHEET_CREDENTIALS_JSON"])
+    creds = Credentials.from_service_account_info(service_account_info, scopes=scopes)
+    
     client = gspread.authorize(creds)
     return client
 

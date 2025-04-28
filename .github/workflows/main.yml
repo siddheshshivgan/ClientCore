@@ -22,10 +22,6 @@ jobs:
         GSHEET_CREDENTIALS_JSON: ${{ secrets.GSHEET_CREDENTIALS_JSON }}
 
     steps:
-    - name: Create service_account.json file
-      run: |
-        echo '${{ secrets.GSHEET_CREDENTIALS_JSON }}' > service_account.json
-
     - name: Checkout backend repo
       uses: actions/checkout@v2
 
