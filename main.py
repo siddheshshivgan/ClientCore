@@ -108,7 +108,7 @@ def combine_xls_files_to_minimal_output():
 
     # Upload to Google Sheets
     client = connect_to_gsheet()
-    sheet = client.open("combined.xlsx").worksheet("combined")
+    sheet = client.open("combined").worksheet("combined")
     sheet.clear()
     set_with_dataframe(sheet, combined_data)
     print("✅ Data successfully updated in Google Sheets.")
