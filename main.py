@@ -111,7 +111,7 @@ def combine_xls_files_to_minimal_output():
     sheet = client.open("combined").worksheet("combined")
     sheet.clear()
     set_with_dataframe(sheet, combined_data)
-    print("✅ Data successfully updated in Google Sheets.")
+    print("Data successfully updated in Google Sheets.")
 
 if __name__ == "__main__":
     authorize_all()
