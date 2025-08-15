@@ -100,7 +100,7 @@ def combine_xls_files_to_minimal_output():
         df = pd.read_excel(file, engine="xlrd", header=1)
         df = df[:-2]  # remove last two summary rows
         df = df.drop(index=0)  # remove unwanted row after header
-        df = df[["Investor", "Date of Birth"]]
+        df = df[["Investor", "Mobile Number","Date of Birth"]]
         combined_data = pd.concat([combined_data, df], ignore_index=True)
 
     combined_data.drop_duplicates(inplace=True)
