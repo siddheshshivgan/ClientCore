@@ -1,10 +1,12 @@
 import os
 import glob
 import time
+import datetime
 import pandas as pd
 from pathlib import Path
 from PIL import Image
 import pytesseract
+from dotenv import load_dotenv
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -20,6 +22,8 @@ from google.oauth2.service_account import Credentials
 
 # Set up Tesseract
 pytesseract.pytesseract.tesseract_cmd = r'C:/Program Files/Tesseract-OCR/tesseract.exe'
+
+load_dotenv()  # Load environment variables from .env file
 
 # Get Downloads directory
 downloads_dir = Path.home() / "Downloads"
@@ -54,6 +58,28 @@ def connect_to_gsheet():
 def get_latest_xls_files(num_files=3):
     xls_files = sorted(glob.glob(str(downloads_dir / '*.xls')), key=os.path.getmtime, reverse=True)
     return xls_files[:num_files]
+
+# Normalize/force Date of Birth to string values only.
+def _format_dob_value(v):
+    if pd.isna(v):
+        return ""
+    # datetime-like objects
+    if isinstance(v, (pd.Timestamp, datetime.datetime, datetime.date)):
+        return pd.Timestamp(v).strftime("%d-%m-%Y")
+    # Excel serial numbers (integers/floats)
+    if isinstance(v, (int, float)) and not isinstance(v, bool):
+        try:
+            origin = pd.Timestamp("1899-12-30")
+            return (origin + pd.to_timedelta(int(v), unit="D")).strftime("%d-%m-%Y")
+        except Exception:
+            pass
+    s = str(v).strip()
+    # Try parsing common date strings (day-first)
+    parsed = pd.to_datetime(s, dayfirst=True, errors="coerce", infer_datetime_format=True)
+    if not pd.isna(parsed):
+        return parsed.strftime("%d-%m-%Y")
+    # fallback: return original string
+    return s
 
 # Login Function
 def login(user_id, pwd):
@@ -101,10 +127,14 @@ def combine_xls_files_to_minimal_output():
         df = df[:-2]  # remove last two summary rows
         df = df.drop(index=0)  # remove unwanted row after header
         df = df[["Investor", "Mobile Number","Date of Birth"]]
+        df["Date of Birth"] = df["Date of Birth"].apply(_format_dob_value).astype("string")
         combined_data = pd.concat([combined_data, df], ignore_index=True)
 
     combined_data.drop_duplicates(inplace=True)
     combined_data.reset_index(drop=True, inplace=True)
+
+    # Force DOB to be plain text in Google Sheets (apostrophe prevents auto-date parsing)
+    combined_data["Date of Birth"] = combined_data["Date of Birth"].apply(lambda s: "" if s == "" else "'" + str(s))
 
     # Upload to Google Sheets
     client = connect_to_gsheet()

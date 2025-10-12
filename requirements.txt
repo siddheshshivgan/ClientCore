@@ -10,3 +10,4 @@ requests
 gspread
 gspread_dataframe
 google-auth
+python-dotenv
