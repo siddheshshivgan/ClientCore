@@ -126,12 +126,16 @@ def combine_xls_files_to_minimal_output():
         df = pd.read_excel(file, engine="xlrd", header=1)
         df = df[:-2]  # remove last two summary rows
         df = df.drop(index=0)  # remove unwanted row after header
-        df = df[["Investor", "Mobile Number","Date of Birth"]]
+        df = df[["Partner/Employee","Investor", "Mobile Number","Date of Birth"]]
         df["Date of Birth"] = df["Date of Birth"].apply(_format_dob_value).astype("string")
         combined_data = pd.concat([combined_data, df], ignore_index=True)
 
     combined_data.drop_duplicates(inplace=True)
     combined_data.reset_index(drop=True, inplace=True)
+
+    # --- add sequential id column (1-based) ---
+    combined_data.insert(0, "id", range(1, len(combined_data) + 1))
+    # --- end id column ---
 
     # Force DOB to be plain text in Google Sheets (apostrophe prevents auto-date parsing)
     combined_data["Date of Birth"] = combined_data["Date of Birth"].apply(lambda s: "" if s == "" else "'" + str(s))
